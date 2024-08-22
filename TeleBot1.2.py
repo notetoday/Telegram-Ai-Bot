@@ -219,6 +219,11 @@ async def handle_sb(update: Update, context: CallbackContext) -> None:
         chat_id = update.message.chat_id
         reply_to_message_id = replied_message.message_id  # 获取消息 ID
 
+        # 检查命令发起者是否有封禁和删除权限
+        if not await is_admin(chat_id, update.message.from_user.id, context):
+            await update.message.reply_text("你没有权限使用这个命令。")
+            return
+
         # 记录消息到文件
         log_message_to_file(user_id, message_text)
 
@@ -239,7 +244,7 @@ async def handle_sb(update: Update, context: CallbackContext) -> None:
             await context.bot.delete_message(chat_id, reply_to_message_id)
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f'用户 [{user_id}](tg://user?id={user_id}) 被封禁，消息已删除。',
+                text=f'用户 [{user_id}](tg://user?id={user_id}) 已永久封禁并上报数据，消息已删除。',
                 parse_mode='MarkdownV2'
             )
             await context.bot.send_message(
@@ -252,6 +257,7 @@ async def handle_sb(update: Update, context: CallbackContext) -> None:
     else:
         logging.info('未满足 /ad 命令条件')
         await update.message.reply_text('请在回复消息时使用 /ad 命令。')
+
 # 主程序入口
 def main() -> None:
     application = Application.builder().token('6485367782:AAHB77dDHl8PZQBHbAltQSr51Z2P_pBVPfQ').build()
